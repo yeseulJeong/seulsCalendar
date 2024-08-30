@@ -1,0 +1,8 @@
+vertion:'1.0'
+service:
+web:
+  image: nginx:lastest
+  ports:
+  -"80:80"
+  volumes:
+  -./public:/user/share/nginx/html
