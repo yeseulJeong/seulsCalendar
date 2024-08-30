@@ -1,0 +1,31 @@
+name: Deploy to Lightsail
+
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v1
+
+    - name: Log in to Docker Hub
+      run: echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
+
+    - name: Build and push
+      run: |
+        docker build -t your-docker-image .
+        docker push your-docker-image
+
+    - name: Deploy with dokploy
+      run: |
+        curl -sSL https://dokploy.com/install.sh -o install.sh
+        chmod +x install.sh
+        sudo ./install.sh
+        dokploy deploy -f dokploy.yaml
