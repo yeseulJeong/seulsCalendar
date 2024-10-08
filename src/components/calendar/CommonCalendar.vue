@@ -1,7 +1,7 @@
 
   
   <script setup lang="ts">
-import { reactive, defineEmits } from 'vue';
+import { reactive, defineEmits, ref } from 'vue';
 import { useCalendarStore } from '@/stores/calendarStore';  
 import { storeToRefs } from 'pinia';
   
@@ -10,7 +10,16 @@ const emit = defineEmits(['getDate'])
 const calendarStore = useCalendarStore();
 
 const weekdays = ['일', '월', '화', '수', '목', '금', '토'];
+const nowYear = new Date().getFullYear();
+const showPopup = ref(false);
+const years = Array.from({ length: 50 }, (_, index) => nowYear - 25 + index);
+const months = Array.from({ length: 12 }, (_, index) => index + 1);
+const selectedYear = ref(calendarStore.year);
+const selectedMonth = ref(calendarStore.month + 1);
 
+const togglePopup = () => {
+    showPopup.value = !showPopup.value;
+}
 const checkCalendar = (day:object) => {
     if(day.date) {  
         const dateString = `${calendarStore.year}-${calendarStore.month +1}-${day.date}`
@@ -18,14 +27,23 @@ const checkCalendar = (day:object) => {
         emit('getDate',day)
     }
 }
+const updateYear = () => {
+    calendarStore.year=selectedYear.value;
+    calendarStore.month=selectedMonth.value - 1;
+    calendarStore.generateCalendar();
+    showPopup.value = false;
+}
+
 calendarStore.generateCalendar();
   </script>
   <template>
     <div class="calendar">
       <div class="calendar__header">
-        <button class="calendar__button" @click="calendarStore.prevMonth">이전</button>
-        <span class="calendar__title">{{ calendarStore.year }}년 {{ calendarStore.month + 1 }}월</span>
-        <button class="calendar__button" @click="calendarStore.nextMonth">다음</button>
+        <label id="scrollYear" class="calendar__title" @click="togglePopup()">{{ calendarStore.year }}년 {{ calendarStore.month + 1 }}월</label>
+        <div class="calendar__move__month">
+          <button class="calendar__button" @click="calendarStore.prevMonth">이전</button>
+          <button class="calendar__button" @click="calendarStore.nextMonth">다음</button>
+        </div>
       </div>
       <div class="calendar__weekdays">
         <div class="calendar__weekday" v-for="(weekday, index) in weekdays" :key="index">
@@ -54,6 +72,23 @@ calendarStore.generateCalendar();
         </div>
       </div>
     </div>
+
+    <div v-if="showPopup" class="popup">
+      <div class="popup_wrap">
+        <h3>{{ selectedYear }}년 {{ selectedMonth }}월</h3>
+        <div class="select__wrap">
+          <select v-model="selectedYear">
+            <option v-for="year in years" :key="year" :value="year">{{ year }}년</option>
+          </select>
+          <select v-model="selectedMonth" >
+            <option v-for="month in months" :key="month" :value="month">{{ month }}월</option>
+          </select>
+        </div>
+        <button @click="togglePopup()">닫기</button>
+        <button @click="updateYear()">적용</button>
+      </div>
+    </div>
+
   </template>
 
 
@@ -61,7 +96,7 @@ calendarStore.generateCalendar();
   .calendar {
     display: flex;
     flex-direction: column;
-    width: 300px;
+    width: 100%;
   }
   
   .calendar__header {
@@ -77,6 +112,7 @@ calendarStore.generateCalendar();
   }
   
   .calendar__title {
+    font-size: 1.125rem;
     font-weight: bold;
   }
   
@@ -127,5 +163,21 @@ calendarStore.generateCalendar();
     height: 5px;
     border-radius: 50%;
     margin: 1px;
+  }
+  .popup {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+  .popup_wrap {
+    background-color: #fff;
+    padding: 20px;
+    border-radius: 10px;
   }
   </style>
